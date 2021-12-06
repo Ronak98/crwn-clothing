@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
+import { doc, getDoc, setDoc, getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBojFwyWUMfRNiEFKyipoQgoajle1YLYm8",
@@ -12,7 +13,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-initializeApp(firebaseConfig);
+const firebaseApp = initializeApp(firebaseConfig);
 
 export const auth = getAuth();
 
@@ -21,11 +22,31 @@ provider.setCustomParameters({
   login_hint: "user@example.com",
 });
 
-export const signInWithGoogle = () =>
-  signInWithPopup(auth, provider)
-    .then((result) => {
-      console.log("test", result);
-    })
-    .catch((error) => {
-      console.log("test e", error);
-    });
+export const signInWithGoogle = () => signInWithPopup(auth, provider);
+
+const db = getFirestore(firebaseApp);
+
+export const createUserProfileDocument = async (userAuth, additionalData) => {
+  if (!userAuth) return;
+
+  const docRef = doc(db, "users", `${userAuth.uid}`);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+
+    try {
+      await setDoc(docRef, {
+        displayName,
+        email,
+        createdAt,
+        ...additionalData,
+      });
+    } catch (error) {
+      console.log("error creating user", error.message);
+    }
+  }
+
+  return docRef;
+};
