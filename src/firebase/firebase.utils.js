@@ -22,7 +22,14 @@ provider.setCustomParameters({
   login_hint: "user@example.com",
 });
 
-export const signInWithGoogle = () => signInWithPopup(auth, provider);
+export const signInWithGoogle = () =>
+  signInWithPopup(auth, provider)
+    .then(function (result) {
+      console.log("result", result);
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
 
 const db = getFirestore(firebaseApp);
 
